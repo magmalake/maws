@@ -58,4 +58,19 @@ jobs:
         run: |
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
             || gh release create "$GITHUB_REF_NAME" --title "maws $GITHUB_REF_NAME" --generate-notes || true
-          gh release upload "$GITHUB_REF_NAME" build/dist/maws-*.tar.gz --clobber
+          gh release upload "$GITHUB_REF_NAME" build/dist/maws-*.tar.gz build/dist/maws-*.tar.gz.sha256 --clobber
+
+  # The published release, installed exactly as the README tells people to.
+  verify:
+    needs: build
+    name: install / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: install.sh from the release
+        run: |
+          MAWS_VERSION="${GITHUB_REF_NAME#v}" bash install.sh
+          ~/.local/bin/maws --version

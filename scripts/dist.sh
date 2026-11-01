@@ -51,4 +51,6 @@ if [ "$os" = macos ]; then
 fi
 cp LICENSE NOTICE README.md "$stage/"
 tar -C build/dist -czf "build/dist/$name.tar.gz" "$name"
-echo "built build/dist/$name.tar.gz ($(du -h "build/dist/$name.tar.gz" | cut -f1))"
+# The checksum install.sh verifies before unpacking anything.
+(cd build/dist && { shasum -a 256 "$name.tar.gz" 2>/dev/null || sha256sum "$name.tar.gz"; } > "$name.tar.gz.sha256")
+echo "built build/dist/$name.tar.gz ($(du -h "build/dist/$name.tar.gz" | cut -f1)), sha256 $(cut -d' ' -f1 "build/dist/$name.tar.gz.sha256")"
