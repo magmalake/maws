@@ -88,16 +88,53 @@ behavioural reference: same resources, same price-list parsing, same caches,
 same `--once` layout. `tests/maws_test.mojo` asserts the same cases as
 `py_reference/tests/test_model.py`.
 
-## Build
+## Install
 
-sigv4.mojo and xml.mojo are consumed by source path, so check them out next
-to this repository:
+### Prebuilt binary
+
+Each [release](https://github.com/magmalake/maws/releases) has a tarball per
+platform (`macos-arm64`, `linux-x64`) holding `bin/maws` and the three Mojo
+runtime libraries it loads from `../lib`. Unpack it anywhere and link the
+binary onto your `PATH`:
+
+```bash
+v=0.1.0; p=macos-arm64          # or linux-x64
+curl -fsSL "https://github.com/magmalake/maws/releases/download/v$v/maws-$v-$p.tar.gz" \
+  | tar -C ~/.local/share -xz
+ln -sf ~/.local/share/maws-$v-$p/bin/maws ~/.local/bin/maws
+maws --version
+```
+
+libcurl comes from the system: macOS always has it; on Linux install
+`libcurl4` (Debian/Ubuntu) or `libcurl` (Fedora/Arch) if it is missing.
+Mojo has no static runtime, so — unlike a Go or Rust binary — `bin/maws`
+must stay next to its `lib/` directory; move the whole folder, not the file.
+
+`pixi run -e stable dist` builds the same tarball locally into `build/dist/`.
+
+### From source
+
+Needs [pixi](https://pixi.sh). sigv4.mojo and xml.mojo are consumed by source
+path, so clone all three side by side:
 
 ```bash
 git clone git@github.com:magmalake/maws.git
 git clone git@github.com:magmalake/sigv4.mojo.git
 git clone git@github.com:magmalake/xml.mojo.git
 cd maws
+pixi run -e stable install      # builds build/maws, symlinks it into ~/.local/bin
+maws --version
+```
+
+`MAWS_BIN_DIR=/some/dir pixi run -e stable install` puts the link elsewhere;
+the directory must be on your `PATH`. The link is a symlink on purpose: the
+binary finds the Mojo runtime and libcurl in this checkout's `.pixi`
+environment, so keep the checkout where it is (and rerun `install` after a
+`git pull` to rebuild). To uninstall, `rm ~/.local/bin/maws`.
+
+## Develop
+
+```bash
 pixi run -e stable build        # → build/maws (Mojo 1.2.0; `pixi run build` for nightly)
 pixi run -e stable test         # MAWS_LIVE_PROFILE=<profile> adds a live Pricing lookup
 uv run --project py_reference maws-py --once

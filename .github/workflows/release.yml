@@ -1,0 +1,61 @@
+name: Release
+
+# Push a tag `vX.Y.Z` (matching VERSION in src/main.mojo) to publish
+# maws-X.Y.Z-macos-arm64.tar.gz and maws-X.Y.Z-linux-x64.tar.gz.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: maws
+      - uses: actions/checkout@v4
+        with:
+          repository: magmalake/sigv4.mojo
+          path: sigv4.mojo
+      - uses: actions/checkout@v4
+        with:
+          repository: magmalake/xml.mojo
+          path: xml.mojo
+
+      - uses: prefix-dev/setup-pixi@v0.10.2
+        with:
+          pixi-version: v0.79.0
+          manifest-path: maws/pixi.toml
+          environments: stable
+          locked: false
+
+      - name: Check the tag matches the version
+        working-directory: maws
+        run: |
+          v="$(sed -n 's/^comptime VERSION = "\(.*\)"/\1/p' src/main.mojo)"
+          [ "v$v" = "${GITHUB_REF_NAME}" ] || { echo "tag ${GITHUB_REF_NAME} != VERSION $v"; exit 1; }
+
+      - name: Test and build the tarball
+        working-directory: maws
+        run: |
+          pixi run -e stable test
+          pixi run -e stable dist
+          mkdir -p "$RUNNER_TEMP/unpack"
+          tar -C "$RUNNER_TEMP/unpack" -xzf build/dist/maws-*.tar.gz
+          env -i HOME="$HOME" PATH=/usr/bin:/bin "$RUNNER_TEMP"/unpack/maws-*/bin/maws --version
+
+      - name: Upload to the release
+        working-directory: maws
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 \
+            || gh release create "$GITHUB_REF_NAME" --title "maws $GITHUB_REF_NAME" --generate-notes || true
+          gh release upload "$GITHUB_REF_NAME" build/dist/maws-*.tar.gz --clobber

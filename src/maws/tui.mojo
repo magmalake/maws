@@ -211,7 +211,7 @@ def read_key(timeout_ms: Int) -> Int:
     # the symbol (std.io binds `read` too, and one module may hold only one).
     var byte: List[UInt8] = [0]
     var got = external_call["read", Int](
-        c_int(0), byte.unsafe_ptr().bitcast[NoneType](), Int(1)
+        c_int(0), byte.unsafe_ptr().unsafe_bitcast[NoneType](), Int(1)
     )
     return Int(byte[0]) if got == 1 else -1
 

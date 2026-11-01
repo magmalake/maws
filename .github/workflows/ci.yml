@@ -44,6 +44,23 @@ jobs:
         working-directory: maws
         run: pixi run -e ${{ matrix.env }} ./build/maws --version
 
+      # The release tarball, built and run *outside* pixi, so a binary that
+      # still needs the environment fails here rather than for a user.
+      - name: Release tarball
+        if: matrix.env == 'stable'
+        working-directory: maws
+        run: |
+          pixi run -e stable dist
+          mkdir -p "$RUNNER_TEMP/unpack"
+          tar -C "$RUNNER_TEMP/unpack" -xzf build/dist/maws-*.tar.gz
+          env -i HOME="$HOME" PATH=/usr/bin:/bin "$RUNNER_TEMP"/unpack/maws-*/bin/maws --version
+
+      - uses: actions/upload-artifact@v4
+        if: matrix.env == 'stable'
+        with:
+          name: maws-${{ matrix.os }}
+          path: maws/build/dist/*.tar.gz
+
   python-reference:
     runs-on: ubuntu-latest
     steps:
