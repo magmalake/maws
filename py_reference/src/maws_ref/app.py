@@ -39,6 +39,27 @@ def summary_line(resources: list[Resource], bill: Bill | None, now: datetime) ->
     return "   ".join(parts)
 
 
+def account_title(session: boto3.Session, regions: list[str]) -> str:
+    """``account <id> · profile <name> · <regions>`` for the header.
+
+    A member account of an Organization only sees its own bill, so a $0 here
+    next to a non-zero bill in the console usually means "different account".
+    STS ``GetCallerIdentity`` is free and needs no IAM permission.
+    """
+    try:
+        account = session.client("sts", region_name=regions[0]).get_caller_identity()["Account"]
+    except Exception:
+        account = "?"
+    label = f"account {account}"
+    try:  # the console's account-menu name; needs account:GetAccountInformation
+        name = session.client("account", region_name="us-east-1").get_account_information().get("AccountName")
+        if name:
+            label = f"{name} ({label})"
+    except Exception:
+        pass
+    return f"{label} · profile {session.profile_name or 'default'} · {', '.join(regions)}"
+
+
 def gather(session: boto3.Session, regions: list[str], force_bill: bool = False):
     prices = PriceCache(session)
     resources: list[Resource] = []
@@ -84,7 +105,7 @@ class MawsApp(App):
         yield Footer()
 
     def on_mount(self) -> None:
-        self.sub_title = f"{self.session.profile_name or 'default'} · {', '.join(self.regions)}"
+        self.sub_title = account_title(self.session, self.regions)
         res = self.query_one("#resources", DataTable)
         res.add_columns("kind", "region", "id", "name", "detail", "state", "$/hr", "note")
         svc = self.query_one("#services", DataTable)
@@ -127,8 +148,9 @@ class MawsApp(App):
                 svc.add_row(s.service, _usd(s.amount))
 
 
-def print_once(resources: list[Resource], bill: Bill | None, error: str = "") -> None:
+def print_once(title: str, resources: list[Resource], bill: Bill | None, error: str = "") -> None:
     now = datetime.now(timezone.utc)
+    print(title)
     print(summary_line(resources, bill, now))
     print()
     print(f"{'kind':5} {'region':14} {'id':24} {'name':20} {'detail':18} {'state':10} {'$/hr':>9}  note")
@@ -158,7 +180,7 @@ def main(argv: list[str] | None = None) -> None:
     session = boto3.Session(profile_name=args.profile)
     regions = args.regions or [session.region_name or "us-east-1"]
     if args.once:
-        print_once(*gather(session, regions))
+        print_once(account_title(session, regions), *gather(session, regions))
         return
     MawsApp(session, regions, args.interval).run()
 

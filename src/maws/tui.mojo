@@ -127,9 +127,13 @@ def resource_row(r: Resource) -> String:
 
 
 def print_once(
-    resources: List[Resource], bill: Optional[Bill], bill_error: String
+    title: String,
+    resources: List[Resource],
+    bill: Optional[Bill],
+    bill_error: String,
 ):
     """The non-interactive `--once` output; same layout as `maws-py --once`."""
+    print(title)
     print(summary_line(resources, bill, epoch_now()))
     print()
     print(resource_header())

@@ -9,7 +9,7 @@ have I been billed so far this month?** — in one terminal screen, written in
 [Mojo](https://www.modular.com/mojo).
 
 ```
- maws · aws cli dista-bench · us-east-2
+ maws · Hold My Coffee (account 123456789012) · aws cli dista-bench · us-east-2
 burn $0.1342/hr ($3.22/day)   month-to-date $41.87   projected $132.50
 
 kind  region         id                       name                 detail             state           $/hr  note
@@ -41,7 +41,9 @@ maws --once                            # print and exit
   instance IPs). Spot, Reserved Instances, Savings Plans, IOPS/throughput and
   data processing are **not** reflected; the note column says so per row.
 - **month-to-date** is Cost Explorer's unblended cost, grouped by service. It
-  lags real usage by roughly 8–24 hours.
+  lags real usage by roughly 8–24 hours, and it covers **only the account in
+  the header** — a member account of an AWS Organization does not see the rest
+  of the organization's bill; the management account does.
 - **projected** = month-to-date + current burn × hours left in the month: "if
   nothing changes". Usage-priced services (S3, data transfer) only show up via
   the bill.
@@ -53,7 +55,9 @@ and only re-read on demand with `b`. Prices are cached for 7 days
 
 **Permissions:** `ec2:DescribeInstances`, `ec2:DescribeVolumes`,
 `ec2:DescribeNatGateways`, `ec2:DescribeAddresses`, `pricing:GetProducts`,
-`ce:GetCostAndUsage`. A region your account cannot read (an SCP, a disabled
+`ce:GetCostAndUsage`; optionally `account:GetAccountInformation`, which puts
+the account's name next to its ID in the header (the ID itself comes from STS
+`GetCallerIdentity`, which needs no permission). A region your account cannot read (an SCP, a disabled
 opt-in region) is reported as a warning and the others still show.
 
 ## Credentials

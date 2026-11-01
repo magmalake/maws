@@ -23,6 +23,8 @@ from .http import HttpResponse, request
 from .jsonlite import JsonDoc, NONE
 
 comptime EC2_API_VERSION = "2016-11-15"
+comptime STS_API_VERSION = "2011-06-15"
+comptime USER_AGENT = "maws/0.1.0"
 comptime MAX_ATTEMPTS = 4
 
 
@@ -109,6 +111,7 @@ struct AwsClient(Copyable, Movable):
         content_type: String,
         target: String,
         body: String,
+        path: String = "/",
     ) raises -> HttpResponse:
         if not self.creds.is_set():
             raise Error(
@@ -124,13 +127,16 @@ struct AwsClient(Copyable, Movable):
         ]
         if target != "":
             headers.append(Header("x-amz-target", target))
+        # Unsigned. libcurl sends no User-Agent by default, and the Account
+        # Management endpoint answers a UA-less request with a bare 403.
+        var unsigned: List[Header] = [Header("user-agent", USER_AGENT)]
         if self.creds.session_token != "":
             headers.append(
                 Header("x-amz-security-token", self.creds.session_token)
             )
         var signed = sign_request(
             "POST",
-            "/",
+            path,
             List[QueryParam](),
             headers,
             sha256_hex(body),
@@ -142,7 +148,8 @@ struct AwsClient(Copyable, Movable):
             True,
         )
         headers.append(Header("authorization", signed.authorization))
-        return request("POST", "https://" + host + "/", headers, body)
+        headers.extend(unsigned^)
+        return request("POST", "https://" + host + path, headers, body)
 
     def json_call(
         self,
@@ -182,24 +189,29 @@ struct AwsClient(Copyable, Movable):
                 + json_error_message(resp.body)
             )
 
-    def ec2_call(
-        self, region: String, action: String, params: List[FormParam]
+    def query_call(
+        self,
+        host: String,
+        region: String,
+        service: String,
+        version: String,
+        action: String,
+        params: List[FormParam],
     ) raises -> Document:
-        """An EC2 Query operation; returns the parsed XML response."""
+        """A Query-protocol operation (EC2, STS); returns the parsed XML."""
         var all: List[FormParam] = [
             FormParam("Action", action),
-            FormParam("Version", EC2_API_VERSION),
+            FormParam("Version", version),
         ]
         for k in range(len(params)):
             all.append(params[k].copy())
         var body = form_encode(all)
-        var host = "ec2." + region + ".amazonaws.com"
         var attempt = 0
         while True:
             var resp = self._send(
                 host,
                 region,
-                "ec2",
+                service,
                 "application/x-www-form-urlencoded; charset=utf-8",
                 "",
                 body,
@@ -212,7 +224,8 @@ struct AwsClient(Copyable, Movable):
                 sleep(0.25 * Float64(1 << attempt))
                 continue
             raise Error(
-                "ec2 "
+                service
+                + " "
                 + action
                 + " ("
                 + region
@@ -223,3 +236,53 @@ struct AwsClient(Copyable, Movable):
                 + ": "
                 + err[1]
             )
+
+    def ec2_call(
+        self, region: String, action: String, params: List[FormParam]
+    ) raises -> Document:
+        """An EC2 Query operation; returns the parsed XML response."""
+        return self.query_call(
+            "ec2." + region + ".amazonaws.com",
+            region,
+            "ec2",
+            EC2_API_VERSION,
+            action,
+            params,
+        )
+
+    def account_id(self, region: String) raises -> String:
+        """The 12-digit account the credentials belong to, from STS
+        `GetCallerIdentity` — free, and needs no IAM permission at all."""
+        var doc = self.query_call(
+            "sts." + region + ".amazonaws.com",
+            region,
+            "sts",
+            STS_API_VERSION,
+            "GetCallerIdentity",
+            List[FormParam](),
+        )
+        return doc.find_text(doc.root(), "GetCallerIdentityResult/Account")
+
+    def account_name(self) raises -> String:
+        """The account's display name (what the console's account menu shows),
+        from the Account Management API — a REST-JSON `POST
+        /getAccountInformation`. Needs `account:GetAccountInformation`, which
+        many roles lack, so callers treat failure as "unknown"."""
+        var resp = self._send(
+            "account.us-east-1.amazonaws.com",
+            "us-east-1",
+            "account",
+            "application/json",
+            "",
+            "{}",
+            "/getAccountInformation",
+        )
+        if not resp.ok():
+            raise Error(
+                "account GetAccountInformation: HTTP "
+                + String(resp.status)
+                + " "
+                + json_error_message(resp.body)
+            )
+        var doc = JsonDoc.parse(resp.body)
+        return doc.str(doc.root(), "AccountName")

@@ -31,6 +31,7 @@ from maws.model import (
     total_hourly,
 )
 from maws.tui import cell, fmt_fixed, usd
+from xml import Document
 
 comptime EC2_PRICE = """{"product": {"attributes": {"instanceType": "t3.micro"}},
  "terms": {"OnDemand": {"X.JRTCKXETXF": {"priceDimensions": {
@@ -209,6 +210,22 @@ def test_form_and_errors() raises:
     )
     assert_equal(e[0], "AuthFailure")
     assert_equal(e[1], "no")
+
+
+def test_caller_identity_path() raises:
+    """The path `AwsClient.account_id` reads, on STS's documented response."""
+    var doc = Document.parse(
+        "<GetCallerIdentityResponse"
+        ' xmlns="https://sts.amazonaws.com/doc/2011-06-15/">'
+        "<GetCallerIdentityResult><Arn>arn:aws:iam::123456789012:user/Alice</Arn>"
+        "<UserId>AIDAEXAMPLE</UserId><Account>123456789012</Account>"
+        "</GetCallerIdentityResult><ResponseMetadata><RequestId>x</RequestId>"
+        "</ResponseMetadata></GetCallerIdentityResponse>"
+    )
+    assert_equal(
+        doc.find_text(doc.root(), "GetCallerIdentityResult/Account"),
+        "123456789012",
+    )
 
 
 def test_formatting() raises:
