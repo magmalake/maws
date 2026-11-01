@@ -93,27 +93,41 @@ same `--once` layout. `tests/maws_test.mojo` asserts the same cases as
 
 ## Install
 
-### Prebuilt binary
+### Install script (recommended)
 
-Each [release](https://github.com/magmalake/maws/releases) has a tarball per
-platform (`macos-arm64`, `linux-x64`) holding `bin/maws` and the three Mojo
-runtime libraries it loads from `../lib`. Unpack it anywhere and link the
-binary onto your `PATH`:
+For macOS arm64 and Linux x64. Read the script first. It is about a hundred
+lines: it picks the tarball for your machine, downloads it from the latest
+release, **verifies its SHA-256 against the checksum published with it**,
+unpacks it to `~/.local/share/maws/<version>/` and links `~/.local/bin/maws`.
+No sudo, and nothing written outside those two places.
 
 ```bash
-v=0.1.0; p=macos-arm64          # or linux-x64
-curl -fsSL "https://github.com/magmalake/maws/releases/download/v$v/maws-$v-$p.tar.gz" \
-  | tar -C ~/.local/share -xz
-ln -sf ~/.local/share/maws-$v-$p/bin/maws ~/.local/bin/maws
-maws --version
+curl -fsSL https://raw.githubusercontent.com/magmalake/maws/main/install.sh | less
 ```
+
+Once you have read it and are happy with what it does:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/magmalake/maws/main/install.sh | bash
+```
+
+Run the same command again to upgrade. `MAWS_VERSION=0.1.1` pins a release;
+`MAWS_HOME` and `MAWS_BIN_DIR` move the two directories. To uninstall:
+`rm -rf ~/.local/share/maws ~/.local/bin/maws`.
+
+### By hand
+
+Each [release](https://github.com/magmalake/maws/releases) has, per platform,
+`maws-<version>-<platform>.tar.gz` and its `.sha256`. The tarball holds
+`bin/maws` and the three Mojo runtime libraries it loads from `../lib`. Mojo
+has no static runtime, so unlike a Go or Rust binary, `bin/maws` must stay
+next to its `lib/` directory: move the whole folder, not the file.
 
 libcurl comes from the system: macOS always has it; on Linux install
 `libcurl4` (Debian/Ubuntu) or `libcurl` (Fedora/Arch) if it is missing.
-Mojo has no static runtime, so — unlike a Go or Rust binary — `bin/maws`
-must stay next to its `lib/` directory; move the whole folder, not the file.
 
-`pixi run -e stable dist` builds the same tarball locally into `build/dist/`.
+`pixi run -e stable dist` builds the same tarball and checksum locally into
+`build/dist/`.
 
 ### From source
 
@@ -125,7 +139,7 @@ git clone git@github.com:magmalake/maws.git
 git clone git@github.com:magmalake/sigv4.mojo.git
 git clone git@github.com:magmalake/xml.mojo.git
 cd maws
-pixi run -e stable install      # builds build/maws, symlinks it into ~/.local/bin
+pixi run -e stable install      # builds build/maws, symlinks it into ~/.local/bin (dev builds)
 maws --version
 ```
 

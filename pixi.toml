@@ -6,7 +6,7 @@ channels = [
     "https://repo.prefix.dev/modular-community",
 ]
 name = "maws"
-version = "0.1.0"
+version = "0.1.1"
 description = "AWS resources, estimated cost per hour and the month-to-date bill, in a terminal UI written in Mojo."
 platforms = ["osx-arm64", "linux-64"]
 
@@ -25,8 +25,9 @@ emberjson = "*"
 build = { cmd = "mkdir -p build && mojo build -I src -I ../sigv4.mojo/src -I ../xml.mojo/src -Xlinker -L$CONDA_PREFIX/lib -Xlinker -lcurl src/main.mojo -o build/maws" }
 test = { cmd = "mkdir -p build && mojo build -I src -I ../sigv4.mojo/src -I ../xml.mojo/src -Xlinker -L$CONDA_PREFIX/lib -Xlinker -lcurl tests/maws_test.mojo -o build/maws_test && ./build/maws_test" }
 check = { depends-on = ["test", "build"] }
-# Symlinks build/maws into ~/.local/bin (or $MAWS_BIN_DIR); see the script.
-install = { cmd = "bash scripts/install.sh", depends-on = ["build"] }
+# Symlinks the dev build into ~/.local/bin (or $MAWS_BIN_DIR); see the
+# script. Users install releases with the top-level install.sh instead.
+install = { cmd = "bash scripts/link-build.sh", depends-on = ["build"] }
 # A relocatable release tarball in build/dist; see the script.
 dist = { cmd = "bash scripts/dist.sh" }
 py-test = { cmd = "uv run --project py_reference pytest -q py_reference/tests" }

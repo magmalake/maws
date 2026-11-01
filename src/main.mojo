@@ -19,7 +19,7 @@ from maws.http import curl_version
 from maws.model import Bill, Resource, sort_by_hourly
 from maws.tui import Screen, print_once, read_key
 
-comptime VERSION = "0.1.0"
+comptime VERSION = "0.1.1"
 
 
 @fieldwise_init
