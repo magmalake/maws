@@ -8,6 +8,7 @@ than tracking what changed.
 """
 
 from std.ffi import c_int, external_call
+from std.os import getenv
 from std.sys.info import CompilationTarget
 
 from sigv4.signer import epoch_now
@@ -216,8 +217,54 @@ def read_key(timeout_ms: Int) -> Int:
     return Int(byte[0]) if got == 1 else -1
 
 
+@fieldwise_init
+struct Palette(Copyable, Movable):
+    """SGR parameter strings for each role, chosen once per run.
+
+    The colours are the magmalake site's: lake teal for the title and key
+    bars, ember orange for the money line. 24-bit when the terminal says it
+    can (`COLORTERM=truecolor`/`24bit`), the nearest xterm-256 entries
+    otherwise, and plain bold/reverse under `NO_COLOR` or `TERM=dumb`.
+    """
+
+    var bar: String
+    var bar_alert: String
+    var accent: String
+    var head: String
+    var dim: String
+
+    @staticmethod
+    def detect() -> Palette:
+        var term = getenv("TERM", "")
+        if getenv("NO_COLOR", "") != "" or term == "dumb":
+            return Palette("1;7", "1;7", "1", "4", "2")
+        var ct = getenv("COLORTERM", "")
+        if ct == "truecolor" or ct == "24bit":
+            return Palette(
+                "1;38;2;14;13;17;48;2;78;205;196",
+                "1;38;2;14;13;17;48;2;255;122;69",
+                "1;38;2;255;122;69",
+                "4;38;2;232;228;223",
+                "38;2;143;138;150",
+            )
+        return Palette(
+            "1;38;5;16;48;5;80",
+            "1;38;5;16;48;5;209",
+            "1;38;5;209",
+            "4",
+            "38;5;245",
+        )
+
+
+def _sgr(params: String, text: String) -> String:
+    return ESC + params + "m" + text + ESC + "0m"
+
+
 struct Screen:
+    var pal: Palette
+
     def __init__(out self):
+        self.pal = Palette.detect()
         _ = _system("stty -icanon -echo -isig min 1 2>/dev/null")
         _out(ESC + "?1049h" + ESC + "?25l")
 
@@ -236,9 +283,12 @@ struct Screen:
         var rows = size[0]
         var cols = size[1]
         var f = ESC + "H" + ESC + "2J"
-        f += ESC + "1;7m" + cell(" maws · " + title, cols) + ESC + "0m\r\n"
-        f += ESC + "1m" + cell(summary_line(resources, bill, epoch_now()), cols)
-        f += ESC + "0m\r\n\r\n"
+        f += _sgr(self.pal.bar, cell(" maws · " + title, cols)) + "\r\n"
+        f += _sgr(
+            self.pal.accent,
+            cell(summary_line(resources, bill, epoch_now()), cols),
+        )
+        f += "\r\n\r\n"
         var used = 3
 
         var svc_rows = 0
@@ -248,43 +298,41 @@ struct Screen:
         var budget = rows - used - 3 - (min(svc_rows, 12) + 3)
         if budget < 3:
             budget = 3
-        f += ESC + "4m" + cell(resource_header(), cols) + ESC + "0m\r\n"
+        f += _sgr(self.pal.head, cell(resource_header(), cols)) + "\r\n"
         used += 1
         var shown = min(len(resources), budget)
         for k in range(shown):
             f += cell(resource_row(resources[k]), cols) + "\r\n"
         if len(resources) > shown:
             f += (
-                ESC
-                + "2m"
-                + cell("… " + String(len(resources) - shown) + " more", cols)
-                + ESC
-                + "0m\r\n"
+                _sgr(
+                    self.pal.dim,
+                    cell("… " + String(len(resources) - shown) + " more", cols),
+                )
+                + "\r\n"
             )
         if len(resources) == 0:
             f += (
-                ESC
-                + "2m(no billable EC2/EBS/NAT/EIP resources)"
-                + ESC
-                + "0m\r\n"
+                _sgr(self.pal.dim, "(no billable EC2/EBS/NAT/EIP resources)")
+                + "\r\n"
             )
 
         f += "\r\n"
         if bill:
             ref b = bill.value()
             f += (
-                ESC
-                + "4m"
-                + cell(
-                    "month to date by service ("
-                    + b.start
-                    + " → "
-                    + b.end
-                    + ")",
-                    cols,
+                _sgr(
+                    self.pal.head,
+                    cell(
+                        "month to date by service ("
+                        + b.start
+                        + " → "
+                        + b.end
+                        + ")",
+                        cols,
+                    ),
                 )
-                + ESC
-                + "0m\r\n"
+                + "\r\n"
             )
             for k in range(min(len(b.by_service), 12)):
                 f += (
@@ -298,9 +346,15 @@ struct Screen:
                     + "\r\n"
                 )
 
-        f += ESC + String(rows) + ";1H" + ESC + "7m"
-        f += cell(
-            " r refresh   b re-read bill ($0.01)   q quit   " + status, cols
+        # The key bar turns ember when the status carries an error.
+        var bar = self.pal.bar
+        if status.startswith("error") or status.find(" · bill:") >= 0:
+            bar = self.pal.bar_alert
+        f += ESC + String(rows) + ";1H"
+        f += _sgr(
+            bar,
+            cell(
+                " r refresh   b re-read bill ($0.01)   q quit   " + status, cols
+            ),
         )
-        f += ESC + "0m"
         _out(f)
