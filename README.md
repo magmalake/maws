@@ -32,6 +32,9 @@ maws --profile prod --region us-east-1 --region eu-west-1
 maws --once                            # print and exit
 ```
 
+Colours follow the terminal: 24-bit when `COLORTERM` is `truecolor`/`24bit`,
+xterm-256 otherwise, and none under `NO_COLOR` or `TERM=dumb`.
+
 ## What the numbers mean
 
 - **$/hr** is the **on-demand list price** from the AWS Pricing API for each
