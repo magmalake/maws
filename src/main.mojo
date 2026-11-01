@@ -127,13 +127,27 @@ def main() raises:
         raise e^
     var creds = load_credentials(a.profile)
     var client = AwsClient(creds)
-    var title = creds.source + " · "
+    # Which account the numbers belong to: a member account of an
+    # Organization only sees its own bill, so a $0 here next to a non-zero
+    # bill in the console usually means "different account".
+    var account: String
+    try:
+        account = "account " + client.account_id(a.regions[0])
+    except:
+        account = String("account ?")
+    try:
+        var name = client.account_name()
+        if name != "":
+            account = name + " (" + account + ")"
+    except:
+        pass  # no account:GetAccountInformation — the ID alone will do
+    var title = account + " · " + creds.source + " · "
     for k in range(len(a.regions)):
         title += ("" if k == 0 else ", ") + a.regions[k]
 
     if a.once:
         var snap = gather(client, a.regions, False)
-        print_once(snap.resources, snap.bill, snap.bill_error)
+        print_once(title, snap.resources, snap.bill, snap.bill_error)
         if snap.error != "":
             print()
             print("warning: " + snap.error)
