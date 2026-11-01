@@ -1,0 +1,6 @@
+.pixi/
+build/
+*.conda
+.venv/
+__pycache__/
+*.egg-info/

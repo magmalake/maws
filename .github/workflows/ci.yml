@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  mojo:
+    name: ${{ matrix.env == 'default' && 'nightly' || matrix.env }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        env: [default, stable]
+    steps:
+      # sigv4.mojo and xml.mojo are consumed by source path
+      # (`-I ../sigv4.mojo/src`), so CI lays them out next to this checkout.
+      - uses: actions/checkout@v4
+        with:
+          path: maws
+      - uses: actions/checkout@v4
+        with:
+          repository: magmalake/sigv4.mojo
+          path: sigv4.mojo
+      - uses: actions/checkout@v4
+        with:
+          repository: magmalake/xml.mojo
+          path: xml.mojo
+
+      - uses: prefix-dev/setup-pixi@v0.10.2
+        with:
+          pixi-version: v0.79.0
+          manifest-path: maws/pixi.toml
+          environments: ${{ matrix.env }}
+          locked: false
+
+      - name: Unit tests and build
+        working-directory: maws
+        run: pixi run -e ${{ matrix.env }} check
+
+      - name: CLI smoke
+        working-directory: maws
+        run: pixi run -e ${{ matrix.env }} ./build/maws --version
+
+  python-reference:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run --project py_reference pytest -q py_reference/tests

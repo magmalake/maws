@@ -1,0 +1,40 @@
+[workspace]
+authors = ["Marius S <39998+winding-lines@users.noreply.github.com>"]
+channels = [
+    "https://conda.modular.com/max-nightly",
+    "conda-forge",
+    "https://repo.prefix.dev/modular-community",
+]
+name = "maws"
+version = "0.1.0"
+description = "AWS resources, estimated cost per hour and the month-to-date bill, in a terminal UI written in Mojo."
+platforms = ["osx-arm64", "linux-64"]
+
+# Sibling magmalake tins are consumed by *source path*, as everywhere else in
+# magmalake: sigv4.mojo (signing) and xml.mojo (EC2 responses) are checked out
+# next to this repository (CI does the same) and reached with -I.
+#
+# HTTPS is libcurl, called directly through `external_call` — its variadic
+# `curl_easy_setopt` included, via `num_fixed_args` — and linked at build
+# time. No C shim, so there is nothing to compile with a C toolchain.
+[dependencies]
+libcurl = ">=8,<9"
+emberjson = "*"
+
+[tasks]
+build = { cmd = "mkdir -p build && mojo build -I src -I ../sigv4.mojo/src -I ../xml.mojo/src -Xlinker -L$CONDA_PREFIX/lib -Xlinker -lcurl -Xlinker -rpath -Xlinker $CONDA_PREFIX/lib src/main.mojo -o build/maws" }
+test = { cmd = "mkdir -p build && mojo build -I src -I ../sigv4.mojo/src -I ../xml.mojo/src -Xlinker -L$CONDA_PREFIX/lib -Xlinker -lcurl -Xlinker -rpath -Xlinker $CONDA_PREFIX/lib tests/maws_test.mojo -o build/maws_test && ./build/maws_test" }
+check = { depends-on = ["test", "build"] }
+py-test = { cmd = "uv run --project py_reference pytest -q py_reference/tests" }
+fmt = { cmd = "mojo format src tests" }
+format-check = { cmd = "mojo format src tests && git diff --exit-code -- src tests" }
+
+[feature.nightly.dependencies]
+modular = ">=26.8.0.dev2026102305,<28"
+
+[feature.stable.dependencies]
+mojo-compiler = "==1.2.0"
+
+[environments]
+default = ["nightly"]
+stable = ["stable"]

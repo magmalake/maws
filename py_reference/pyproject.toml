@@ -1,0 +1,27 @@
+[project]
+name = "maws-reference"
+version = "0.1.0"
+description = "Reference implementation of maws: AWS resources, estimated cost per hour and month-to-date bill in a terminal UI"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+dependencies = [
+    "boto3[crt]>=1.40",  # crt: needed for `aws login` sessions
+    "textual>=0.80",
+]
+
+[project.scripts]
+maws-py = "maws_ref.app:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/maws_ref"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
