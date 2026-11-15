@@ -82,3 +82,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - run: uv run --project py_reference pytest -q py_reference/tests
+
+  # Imports: no cycles between modules, and each name imported from the
+  # module that defines it (github.com/ouromo/customs).
+  customs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ouromo/customs@v0.2.0
