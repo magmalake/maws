@@ -9,7 +9,7 @@ from std.os import getenv, makedirs
 from std.os.path import exists
 
 from sigv4.signer import epoch_now
-from xml import Document, NO_NODE
+from xml import Document
 
 from .client import AwsClient, FormParam
 from .jsonlite import J_NULL, JsonDoc, NONE, json_str
