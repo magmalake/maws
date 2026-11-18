@@ -4,7 +4,7 @@ A line-for-line port of `py_reference/src/maws_ref/model.py`; the tests in
 `tests/maws_test.mojo` assert the same cases as `py_reference/tests`.
 """
 
-from .jsonlite import JsonDoc, J_OBJECT, NONE
+from .jsonlite import JsonDoc, NONE
 
 comptime HOURS_PER_MONTH = 730.0
 """AWS's own convention for turning a monthly (GB-Mo) rate into an hourly one."""

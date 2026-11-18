@@ -20,7 +20,7 @@ from xml import Document, NO_NODE
 
 from .credentials import Credentials
 from .http import HttpResponse, request
-from .jsonlite import JsonDoc, NONE
+from .jsonlite import JsonDoc
 
 comptime EC2_API_VERSION = "2016-11-15"
 comptime STS_API_VERSION = "2011-06-15"
