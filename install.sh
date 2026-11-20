@@ -16,7 +16,7 @@
 # No sudo, nothing outside those two directories, nothing run from the
 # download besides `maws --version` at the end. Settings, all optional:
 #
-#   MAWS_VERSION=0.1.1        a specific release instead of the latest
+#   MAWS_VERSION=0.1.2        a specific release instead of the latest
 #   MAWS_HOME=~/.local/share/maws   where versions are unpacked
 #   MAWS_BIN_DIR=~/.local/bin       where the `maws` link goes
 #

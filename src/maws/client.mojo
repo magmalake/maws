@@ -24,7 +24,7 @@ from .jsonlite import JsonDoc
 
 comptime EC2_API_VERSION = "2016-11-15"
 comptime STS_API_VERSION = "2011-06-15"
-comptime USER_AGENT = "maws/0.1.1"
+comptime USER_AGENT = "maws/0.1.2"
 comptime MAX_ATTEMPTS = 4
 
 
