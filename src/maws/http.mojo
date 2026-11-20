@@ -59,7 +59,7 @@ def _read_cstring(addr: Int) -> String:
         unsafe_ptr=Pointer[UInt8, ImmUntrackedOrigin](unsafe_from_address=addr),
         length=n,
     )
-    return String(StringSlice(unsafe_from_utf8=span))
+    return String(StringSpan(unsafe_from_utf8=span))
 
 
 def _setopt(h: Int, opt: Int, value: Int) -> Int:

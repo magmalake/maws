@@ -26,7 +26,7 @@ comptime NONE = -1
 
 
 def _slice(b: Span[UInt8, _], start: Int, end: Int) -> String:
-    return String(StringSlice(unsafe_from_utf8=b[start:end]))
+    return String(StringSpan(unsafe_from_utf8=b[start:end]))
 
 
 def _append_utf8(mut out: List[UInt8], cp: Int):
@@ -74,7 +74,7 @@ def json_str(s: String) -> String:
         else:
             out.append(c)
     out.append(34)
-    return String(StringSlice(unsafe_from_utf8=Span(out)))
+    return String(StringSpan(unsafe_from_utf8=Span(out)))
 
 
 struct JsonDoc(Movable, Sized):
@@ -238,7 +238,7 @@ struct Parser:
             else:
                 return
 
-    def lit(mut self, word: StringSlice) raises:
+    def lit(mut self, word: StringSpan) raises:
         var w = word.as_bytes()
         if self.pos + len(w) > len(self.b):
             self.fail("unexpected end")
@@ -297,7 +297,7 @@ struct Parser:
                 _append_utf8(out, cp)
             else:
                 self.fail("bad escape")
-        return String(StringSlice(unsafe_from_utf8=Span(out)))
+        return String(StringSpan(unsafe_from_utf8=Span(out)))
 
     def hex4(mut self) raises -> Int:
         if self.pos + 4 > len(self.b):

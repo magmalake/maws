@@ -373,7 +373,7 @@ def month_to_date(client: AwsClient, force: Bool = False) raises -> Bill:
     except e:
         # Early on the 1st the month has no ingested data yet: that is a
         # $0.00 month so far, not a failure.
-        if String(e).find("DataUnavailableException") < 0:
+        if "DataUnavailableException" not in String(e):
             raise e^
         bill = Bill(0.0, "USD", List[ServiceCost](), period[0], period[1])
     _write(cache_dir() + "/bill.json", _bill_to_json(bill, now))

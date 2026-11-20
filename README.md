@@ -119,14 +119,14 @@ Run the same command again to upgrade. `MAWS_VERSION=0.1.1` pins a release;
 
 Each [release](https://github.com/magmalake/maws/releases) has, per platform,
 `maws-<version>-<platform>.tar.gz` and its `.sha256`. The tarball holds
-`bin/maws` and the three Mojo runtime libraries it loads from `../lib`. Mojo
+`bin/maws` and the four Mojo runtime libraries it loads from `../lib`. Mojo
 has no static runtime, so unlike a Go or Rust binary, `bin/maws` must stay
 next to its `lib/` directory: move the whole folder, not the file.
 
 libcurl comes from the system: macOS always has it; on Linux install
 `libcurl4` (Debian/Ubuntu) or `libcurl` (Fedora/Arch) if it is missing.
 
-`pixi run -e stable dist` builds the same tarball and checksum locally into
+`pixi run dist` builds the same tarball and checksum locally into
 `build/dist/`.
 
 ### From source
@@ -139,11 +139,11 @@ git clone git@github.com:magmalake/maws.git
 git clone git@github.com:magmalake/sigv4.mojo.git
 git clone git@github.com:magmalake/xml.mojo.git
 cd maws
-pixi run -e stable install      # builds build/maws, symlinks it into ~/.local/bin (dev builds)
+pixi run install      # builds build/maws, symlinks it into ~/.local/bin (dev builds)
 maws --version
 ```
 
-`MAWS_BIN_DIR=/some/dir pixi run -e stable install` puts the link elsewhere;
+`MAWS_BIN_DIR=/some/dir pixi run install` puts the link elsewhere;
 the directory must be on your `PATH`. The link is a symlink on purpose: the
 binary finds the Mojo runtime and libcurl in this checkout's `.pixi`
 environment, so keep the checkout where it is (and rerun `install` after a
@@ -152,8 +152,8 @@ environment, so keep the checkout where it is (and rerun `install` after a
 ## Develop
 
 ```bash
-pixi run -e stable build        # → build/maws (Mojo 1.2.0; `pixi run build` for nightly)
-pixi run -e stable test         # MAWS_LIVE_PROFILE=<profile> adds a live Pricing lookup
+pixi run build        # → build/maws (Mojo 1.3.0.dev2026111805)
+pixi run test         # MAWS_LIVE_PROFILE=<profile> adds a live Pricing lookup
 uv run --project py_reference maws-py --once
 ```
 

@@ -49,7 +49,7 @@ def _retryable(status: Int, code: String) -> Bool:
     if status >= 500 or status == 429:
         return True
     return (
-        code.find("Throttl") >= 0
+        "Throttl" in code
         or code == "RequestLimitExceeded"
         or code == "RequestThrottled"
         or code == "LimitExceededException"
@@ -62,7 +62,7 @@ def json_error_code(body: String) -> String:
     try:
         var doc = JsonDoc.parse(body)
         var t = doc.str(doc.root(), "__type")
-        var hash = t.find("#")
+        var hash = t.find("#").or_else(-1)
         if hash >= 0:
             return String(t[byte = hash + 1 :])
         return t

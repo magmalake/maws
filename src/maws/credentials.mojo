@@ -61,7 +61,7 @@ def ini_value(text: String, section: String, key: String) -> String:
             continue
         if not in_section:
             continue
-        var eq = line.find("=")
+        var eq = line.find("=").or_else(-1)
         if eq < 0:
             continue
         var k_ = String(String(line[byte=0:eq]).strip())
