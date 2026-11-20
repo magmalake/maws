@@ -4,8 +4,9 @@
 #   maws-<version>-<os>-<arch>/
 #     bin/maws
 #     lib/libKGENCompilerRTShared.*  libMSupportGlobals.*  libAsyncRTRuntimeGlobals.*
+#         libLLVMSupport.*
 #
-# Mojo has no static runtime, so the three runtime libraries ship next to the
+# Mojo has no static runtime, so the four runtime libraries ship next to the
 # binary, found through an rpath relative to it (@executable_path/../lib on
 # macOS, $ORIGIN/../lib on Linux) — unpack anywhere, symlink or add bin/ to
 # PATH. libcurl is *not* bundled: macOS always has /usr/lib/libcurl.4.dylib,
@@ -41,8 +42,13 @@ else
   patchelf --set-rpath '$ORIGIN/../lib' "$stage/bin/maws"
 fi
 
-for lib in libKGENCompilerRTShared libMSupportGlobals libAsyncRTRuntimeGlobals; do
-  cp -L "$CONDA_PREFIX/lib/$lib.$ext" "$stage/lib/"
+# The macOS compiler package ships libAsyncRTRuntimeGlobals as a `.so` (and
+# libKGENCompilerRTShared.dylib links it by that name), so take whichever
+# file the environment has.
+for lib in libKGENCompilerRTShared libMSupportGlobals libAsyncRTRuntimeGlobals libLLVMSupport; do
+  src="$CONDA_PREFIX/lib/$lib.$ext"
+  [ -e "$src" ] || src="$CONDA_PREFIX/lib/$lib.so"
+  cp -L "$src" "$stage/lib/"
 done
 # Editing load commands invalidates the signature, and arm64 macOS refuses
 # to run unsigned code: re-sign ad hoc.

@@ -33,7 +33,6 @@ jobs:
         with:
           pixi-version: v0.79.0
           manifest-path: maws/pixi.toml
-          environments: stable
           locked: false
 
       - name: Check the tag matches the version
@@ -45,8 +44,8 @@ jobs:
       - name: Test and build the tarball
         working-directory: maws
         run: |
-          pixi run -e stable test
-          pixi run -e stable dist
+          pixi run test
+          pixi run dist
           mkdir -p "$RUNNER_TEMP/unpack"
           tar -C "$RUNNER_TEMP/unpack" -xzf build/dist/maws-*.tar.gz
           env -i HOME="$HOME" PATH=/usr/bin:/bin "$RUNNER_TEMP"/unpack/maws-*/bin/maws --version

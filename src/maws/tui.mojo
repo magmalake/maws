@@ -348,7 +348,7 @@ struct Screen:
 
         # The key bar turns ember when the status carries an error.
         var bar = self.pal.bar
-        if status.startswith("error") or status.find(" · bill:") >= 0:
+        if status.startswith("error") or " · bill:" in status:
             bar = self.pal.bar_alert
         f += ESC + String(rows) + ";1H"
         f += _sgr(
