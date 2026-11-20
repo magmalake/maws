@@ -111,7 +111,7 @@ Once you have read it and are happy with what it does:
 curl -fsSL https://raw.githubusercontent.com/magmalake/maws/main/install.sh | bash
 ```
 
-Run the same command again to upgrade. `MAWS_VERSION=0.1.1` pins a release;
+Run the same command again to upgrade. `MAWS_VERSION=0.1.2` pins a release;
 `MAWS_HOME` and `MAWS_BIN_DIR` move the two directories. To uninstall:
 `rm -rf ~/.local/share/maws ~/.local/bin/maws`.
 

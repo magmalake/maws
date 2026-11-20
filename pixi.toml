@@ -6,7 +6,7 @@ channels = [
     "https://repo.prefix.dev/modular-community",
 ]
 name = "maws"
-version = "0.1.1"
+version = "0.1.2"
 description = "AWS resources, estimated cost per hour and the month-to-date bill, in a terminal UI written in Mojo."
 platforms = ["osx-arm64", "linux-64"]
 
