@@ -1,6 +1,6 @@
 # maws
 
-[![CI](https://github.com/magmalake/maws/actions/workflows/ci.yml/badge.svg)](https://github.com/magmalake/maws/actions/workflows/ci.yml)
+[![CI](https://github.com/magmalake/maws/actions/workflows/ci.yml/badge.svg)](https://github.com/magmalake/maws/actions/workflows/ci.yml) [![Mojo version](https://mojourney.dev/badge/magmalake/maws/mojo.svg)](https://mojourney.dev/repos/magmalake/maws)
 
 Part of [**magmalake**](https://magmalake.org).
 
