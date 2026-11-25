@@ -22,7 +22,7 @@ platforms = ["osx-arm64", "linux-64"]
 # Mojo nightly as every magmalake tin. `mojo` (not just mojo-compiler) because
 # the fmt tasks need `mojo format`.
 [dependencies]
-mojo = "==1.3.0.dev2026111805"
+mojo = "==1.3.0.dev2026112505"
 libcurl = ">=8,<9"
 emberjson = "*"
 
