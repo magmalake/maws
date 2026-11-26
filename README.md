@@ -152,7 +152,7 @@ environment, so keep the checkout where it is (and rerun `install` after a
 ## Develop
 
 ```bash
-pixi run build        # → build/maws (Mojo 1.3.0.dev2026112505)
+pixi run build        # → build/maws (Mojo 1.3.0.dev2026112605)
 pixi run test         # MAWS_LIVE_PROFILE=<profile> adds a live Pricing lookup
 uv run --project py_reference maws-py --once
 ```
